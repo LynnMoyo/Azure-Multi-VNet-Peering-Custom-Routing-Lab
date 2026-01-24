@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "uksouth"
+        },
+        "adminUsername": {
+            "value": "localadmin"
+        },
+        "adminPassword": {
+            "value": "ReplaceMe123!" 
+        },
+        "vmSize": {
+            "value": "Standard_B1s"
+        },
+        "routeTables_rt_CoreServices_name": {
+            "value": "rt-CoreServices"
+        },
+        "virtualMachines_CoreServicesVM_name": {
+            "value": "CoreServicesVM"
+        },
+        "virtualMachines_ManufactoringVM_name": {
+            "value": "ManufactoringVM"
+        },
+        "virtualNetworks_CoreServicesVnet_name": {
+            "value": "CoreServicesVnet"
+        },
+        "virtualNetworks_ManufactoringVnet_name": {
+            "value": "ManufactoringVnet"
+        },
+        "networkInterfaces_coreservicesvm_name": {
+            "value": "coreservicesvm-nic"
+        },
+        "networkInterfaces_manufactoringvm_name": {
+            "value": "manufactoringvm-nic"
+        },
+        "publicIPAddresses_CoreServicesVM_ip_name": {
+            "value": "CoreServicesVM-ip"
+        },
+        "publicIPAddresses_ManufactoringVM_ip_name": {
+            "value": "ManufactoringVM-ip"
+        },
+        "networkSecurityGroups_CoreServicesVM_nsg_name": {
+            "value": "CoreServicesVM-nsg"
+        },
+        "networkSecurityGroups_ManufactoringVM_nsg_name": {
+            "value": "ManufactoringVM-nsg"
+        },
+        "nvaNextHopIp": {
+            "value": "10.0.1.7"
+        }
+    }
+}
