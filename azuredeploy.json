@@ -1,0 +1,83 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "uksouth",
+            "metadata": { "description": "The region where resources will be deployed." }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "azureuser"
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": { "description": "Password for the Virtual Machines" }
+        },
+        "coreVnetName": { "type": "string", "defaultValue": "CoreServicesVnet" },
+        "mfgVnetName": { "type": "string", "defaultValue": "ManufactoringVnet" }
+    },
+    "variables": {
+        "coreOsDiskName": "[concat('osdisk-', uniqueString(resourceGroup().id), '-core')]",
+        "mfgOsDiskName": "[concat('osdisk-', uniqueString(resourceGroup().id), '-mfg')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2024-07-01",
+            "name": "rt-CoreServices",
+            "location": "[parameters('location')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "PerimetertoCore",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/16",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "10.0.1.7"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('coreVnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": { "addressPrefixes": ["10.0.0.0/16"] },
+                "subnets": [
+                    {
+                        "name": "Core",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "routeTable": { "id": "[resourceId('Microsoft.Network/routeTables', 'rt-CoreServices')]" }
+                        }
+                    },
+                    {
+                        "name": "Perimeter",
+                        "properties": { "addressPrefix": "10.0.1.0/24" }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('mfgVnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": { "addressPrefixes": ["172.16.0.0/16"] },
+                "subnets": [
+                    {
+                        "name": "Manufactoring",
+                        "properties": { "addressPrefix": "172.16.0.0/24" }
+                    }
+                ]
+            }
+        }
+        /* Peering and VM resources truncated for brevity - full JSON available in template.json */
+    ]
+}
