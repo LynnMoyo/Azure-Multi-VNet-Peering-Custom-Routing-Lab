@@ -4,12 +4,16 @@
 This project demonstrates the implementation of a robust Hub-and-Spoke network topology in Azure. I transitioned a manual Portal-based deployment into a fully parameterised Infrastructure as Code (IaC) solution. The lab focuses on interconnecting isolated environments (Core Services and Manufacturing) and controlling traffic flow via User-Defined Routes (UDRs).
 
 ## 🏗️ Architecture
-The environment consists of two Virtual Networks located in UK South, interconnected via a low-latency peering link.
+The environment consists of two Virtual Networks located in UK South, interconnected via a low-latency peering link
 ***VNet 1:** CoreServicesVnet (10.0.0.0/16)
-***Core Subnet:** Hosts the primary service VM (CoreServicesVM).
-***Perimeter Subnet:** Reserved for NVA (Network Virtual Appliance) or gateway traffic.
+
+***Core Subnet:** Hosts the primary service VM (CoreServicesVM)
+
+***Perimeter Subnet:** Reserved for NVA (Network Virtual Appliance) or gateway traffic
+
 ***VNet 2:** ManufactoringVnet (172.16.0.0/16)
-***Manufacturing Subnet:** Hosts production-specific workloads (ManufactoringVM).
+
+***Manufacturing Subnet:** Hosts production-specific workloads (ManufactoringVM)
 
 ## 🛣️Routing Logic: User-Defined Routes (UDR)
 To simulate security inspection and traffic redirection:
