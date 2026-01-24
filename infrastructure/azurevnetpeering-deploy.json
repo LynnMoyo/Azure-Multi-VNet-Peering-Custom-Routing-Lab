@@ -1,0 +1,319 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": { "description": "Location for all resources." }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "localadmin",
+            "metadata": { "description": "Admin username for the VMs." }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": { "description": "Admin password for the VMs." }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_B1s"
+        },
+        "routeTables_rt_CoreServices_name": {
+            "defaultValue": "rt-CoreServices",
+            "type": "String"
+        },
+        "virtualMachines_CoreServicesVM_name": {
+            "defaultValue": "CoreServicesVM",
+            "type": "String"
+        },
+        "virtualMachines_ManufactoringVM_name": {
+            "defaultValue": "ManufactoringVM",
+            "type": "String"
+        },
+        "virtualNetworks_CoreServicesVnet_name": {
+            "defaultValue": "CoreServicesVnet",
+            "type": "String"
+        },
+        "virtualNetworks_ManufactoringVnet_name": {
+            "defaultValue": "ManufactoringVnet",
+            "type": "String"
+        },
+        "networkInterfaces_coreservicesvm_name": {
+            "defaultValue": "coreservicesvm-nic",
+            "type": "String"
+        },
+        "networkInterfaces_manufactoringvm_name": {
+            "defaultValue": "manufactoringvm-nic",
+            "type": "String"
+        },
+        "publicIPAddresses_CoreServicesVM_ip_name": {
+            "defaultValue": "CoreServicesVM-ip",
+            "type": "String"
+        },
+        "publicIPAddresses_ManufactoringVM_ip_name": {
+            "defaultValue": "ManufactoringVM-ip",
+            "type": "String"
+        },
+        "networkSecurityGroups_CoreServicesVM_nsg_name": {
+            "defaultValue": "CoreServicesVM-nsg",
+            "type": "String"
+        },
+        "networkSecurityGroups_ManufactoringVM_nsg_name": {
+            "defaultValue": "ManufactoringVM-nsg",
+            "type": "String"
+        },
+        "nvaNextHopIp": {
+            "type": "string",
+            "defaultValue": "10.0.1.7",
+            "metadata": { "description": "Next hop IP for the custom route." }
+        }
+    },
+    "variables": {
+        "coreOsDiskName": "[concat(parameters('virtualMachines_CoreServicesVM_name'), '_OsDisk_', uniqueString(resourceGroup().id))]",
+        "mfgOsDiskName": "[concat(parameters('virtualMachines_ManufactoringVM_name'), '_OsDisk_', uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('networkSecurityGroups_CoreServicesVM_nsg_name')]",
+            "location": "[parameters('location')]",
+            "properties": { "securityRules": [] }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('networkSecurityGroups_ManufactoringVM_nsg_name')]",
+            "location": "[parameters('location')]",
+            "properties": { "securityRules": [] }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('publicIPAddresses_CoreServicesVM_ip_name')]",
+            "location": "[parameters('location')]",
+            "sku": { "name": "Standard", "tier": "Regional" },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('publicIPAddresses_ManufactoringVM_ip_name')]",
+            "location": "[parameters('location')]",
+            "sku": { "name": "Standard", "tier": "Regional" },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('routeTables_rt_CoreServices_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "disableBgpRoutePropagation": true,
+                "routes": [
+                    {
+                        "name": "PerimetertoCore",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/16",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nvaNextHopIp')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-11-01",
+            "name": "[parameters('virtualMachines_CoreServicesVM_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_coreservicesvm_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": { "vmSize": "[parameters('vmSize')]" },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-datacenter-gensecond",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Windows",
+                        "name": "[variables('coreOsDiskName')]",
+                        "createOption": "FromImage",
+                        "managedDisk": { "storageAccountType": "Standard_LRS" },
+                        "deleteOption": "Delete"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_CoreServicesVM_name')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        { "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_coreservicesvm_name'))]" }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-11-01",
+            "name": "[parameters('virtualMachines_ManufactoringVM_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_manufactoringvm_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": { "vmSize": "[parameters('vmSize')]" },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-datacenter-gensecond",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Windows",
+                        "name": "[variables('mfgOsDiskName')]",
+                        "createOption": "FromImage",
+                        "managedDisk": { "storageAccountType": "Standard_LRS" },
+                        "deleteOption": "Delete"
+                    }
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_ManufactoringVM_name')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        { "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_manufactoringvm_name'))]" }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('virtualNetworks_ManufactoringVnet_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": { "addressPrefixes": [ "172.16.0.0/16" ] },
+                "subnets": [
+                    {
+                        "name": "Manufactoring",
+                        "properties": { "addressPrefix": "172.16.0.0/24" }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('virtualNetworks_CoreServicesVnet_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/routeTables', parameters('routeTables_rt_CoreServices_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_ManufactoringVnet_name'))]"
+            ],
+            "properties": {
+                "addressSpace": { "addressPrefixes": [ "10.0.0.0/16" ] },
+                "subnets": [
+                    {
+                        "name": "Perimeter",
+                        "properties": { "addressPrefix": "10.0.1.0/24" }
+                    },
+                    {
+                        "name": "Core",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "routeTable": { "id": "[resourceId('Microsoft.Network/routeTables', parameters('routeTables_rt_CoreServices_name'))]" }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2024-07-01",
+            "name": "[concat(parameters('virtualNetworks_CoreServicesVnet_name'), '/To-Manufacturing')]",
+            "dependsOn": [ "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_CoreServicesVnet_name'))]" ],
+            "properties": {
+                "remoteVirtualNetwork": { "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_ManufactoringVnet_name'))]" },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2024-07-01",
+            "name": "[concat(parameters('virtualNetworks_ManufactoringVnet_name'), '/To-CoreServices')]",
+            "dependsOn": [ "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_ManufactoringVnet_name'))]" ],
+            "properties": {
+                "remoteVirtualNetwork": { "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_CoreServicesVnet_name'))]" },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('networkInterfaces_coreservicesvm_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_CoreServicesVM_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_CoreServicesVnet_name'), 'Core')]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_CoreServicesVM_nsg_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_CoreServicesVM_ip_name'))]" },
+                            "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_CoreServicesVnet_name'), 'Core')]" }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": { "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_CoreServicesVM_nsg_name'))]" }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('networkInterfaces_manufactoringvm_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_ManufactoringVM_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_ManufactoringVnet_name'), 'Manufactoring')]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_ManufactoringVM_nsg_name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": { "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_ManufactoringVM_ip_name'))]" },
+                            "subnet": { "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_ManufactoringVnet_name'), 'Manufactoring')]" }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": { "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_ManufactoringVM_nsg_name'))]" }
+            }
+        }
+    ]
+}
