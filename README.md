@@ -40,6 +40,6 @@ Connectivity was verified using industry-standard Azure tools:
 ![Network Watcher](./assets/NetworkWatcher.png)
 
 ***PowerShell RunCommand:** Executed Test-NetConnection directly from the Azure Portal onto the VMs.
-![RunCommandScript](.assets/RunCmdScript.png)
+![RunCmdScript](./assets/RunCmdScript.png)
 
 ***Result:** Confirmed successful connectivity between 10.0.0.4 and 172.16.0.4 over the peered backbone.
