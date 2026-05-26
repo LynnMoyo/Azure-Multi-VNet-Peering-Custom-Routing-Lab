@@ -1,9 +1,9 @@
 # Azure-Multi-VNet-Peering-Custom-Routing-Lab
 
-## 📖 Project Overview
-This project demonstrates the implementation of a robust Hub-and-Spoke network topology in Azure. I transitioned a manual Portal-based deployment into a fully parameterised Infrastructure as Code (IaC) solution. The lab focuses on interconnecting isolated environments (Core Services and Manufacturing) and controlling traffic flow via User-Defined Routes (UDRs).
+## Project Overview
+This project illustrates the implementation of a robust Hub-and-Spoke network topology in Azure. I transitioned a manual Portal-based deployment into a fully parameterised Infrastructure as Code (IaC) solution. The lab focuses on interconnecting isolated environments (Core Services and Manufacturing) and controlling traffic flow via User-Defined Routes (UDRs).
 
-## 🏗️ Architecture
+## Architecture
 The environment consists of two Virtual Networks located in UK South, interconnected via a low-latency peering link
 ***VNet 1:** CoreServicesVnet (10.0.0.0/16)
 
@@ -13,9 +13,9 @@ The environment consists of two Virtual Networks located in UK South, interconne
 
 ***VNet 2:** ManufactoringVnet (172.16.0.0/16)
 
-***Manufacturing Subnet:** Hosts production-specific workloads (ManufactoringVM)
+***Manufacturing Subnet:** Hosts production-specific workloads (ManufacturingVM)
 
-## 🛣️Routing Logic: User-Defined Routes (UDR)
+## Routing Logic: User-Defined Routes (UDR)
 To simulate security inspection and traffic redirection:
 ***Route Table (rt-CoreServices):** Applied to the Core Subnet
 
@@ -23,7 +23,7 @@ To simulate security inspection and traffic redirection:
 
 ***BGP Propagation:** Disabled to ensure the custom static routes maintain priority
 
-## 🛠️ Infrastructure as Code (ARM)
+## Infrastructure as Code (ARM)
 The deployment is automated using a parameterised ARM template. Key improvements made to the template include:
 
 ***Location Portability:** Defined via a location parameter (defaults to uksouth)
@@ -32,10 +32,10 @@ The deployment is automated using a parameterised ARM template. Key improvements
 
 ***Security:** Passwords and sensitive data are moved to parameters for secure handling. Please note there is a placeholder password in parameters.json file. Ensure to change this.
 
-## ✅ Validation & Troubleshooting
+## Validation & Troubleshooting
 Connectivity was verified using industry-standard Azure tools:
 
-***Network Watcher:** Used the Troubleshoot tool to verify the health of the Network Interfaces (NICs) and ensure NSGs weren't dropping valid traffic.
+***Network Watcher:** I used the Troubleshoot tool to verify the health of the Network Interfaces (NICs) and ensure NSGs weren't dropping valid traffic.
 
 ![Network Watcher](./assets/NetworkWatcher.png)
 
